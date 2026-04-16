@@ -1,24 +1,35 @@
-<script>
-	import { onMount } from 'svelte';
-
-	let message = $state('loading...');
-
-	onMount(async () => {
-		try {
-			// In docker-compose, we will map port 8080
-			const res = await fetch('http://localhost:8080/');
-			const data = await res.json();
-			message = data.message;
-		} catch (error) {
-			message = 'Error connecting to backend.';
-			console.error(error);
-		}
-	});
-</script>
-
-<main style="font-family: sans-serif; text-align: center; margin-top: 50px;">
-	<h1>DevOps Practice Web App</h1>
-	<div style="padding: 20px; background: #f0f0f0; border-radius: 8px; display: inline-block;">
-		<p>Backend says: <strong>{message}</strong></p>
-	</div>
+<main>
+	<p>
+		Welcome to the DevOps Pipeline To-Do App! This is a simple application designed to demonstrate
+		how to build a full-stack application using Go for the backend and Svelte for the frontend.
+	</p>
+	<br />
+	<p>To get started, create an account or log in to your existing account.</p>
+	<br><hr /><br>
+	<a href="/todos">View To-Do List, require login</a>
 </main>
+
+<style>
+	main {
+		max-width: 600px;
+		margin: 2rem auto;
+		padding: 1rem;
+		font-family: Arial, sans-serif;
+	}
+
+	p {
+		font-size: 1.2rem;
+		line-height: 1.5;
+		color: #555;
+	}
+
+	a {
+		display: inline-block;
+		margin-top: 1rem;
+		padding: 0.5rem 1rem;
+		background-color: #007bff;
+		color: white;
+		text-decoration: none;
+		border-radius: 4px;
+	}
+</style>

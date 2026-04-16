@@ -19,6 +19,39 @@ type Todo struct {
 	IsCompleted bool   `json:"is_completed"`
 }
 
+// User represents user authentication model
+type User struct {
+	ID       int    `json:"id"`
+	Username string `json:"username"`
+	PasswordHash string `json:"password_hash"`
+	Email    string `json:"email"`
+}
+
+// AuthResponse represents the response after login/register
+type AuthResponse struct {
+	ID       int    `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Message  string `json:"message"`
+}
+
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		// If it's a preflight OPTIONS request, stop here and return 200 OK
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// Otherwise, pass the request down to the actual router
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	// 1. Database Connection Configuration
 	// We read these from the environment. Later, Docker and Terraform will inject these!
@@ -61,8 +94,77 @@ func main() {
 		w.Write([]byte("API is healthy and running!"))
 	})
 
+	// Authentication endpoints
+	mux.HandleFunc("POST /api/register", func(w http.ResponseWriter, r *http.Request) {
+		var user User
+		if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+			http.Error(w, "Invalid request payload", http.StatusBadRequest)
+			return
+		}
+
+		if user.Username == "" || user.PasswordHash == "" || user.Email == "" {
+			http.Error(w, "Username, password, and email are required", http.StatusBadRequest)
+			return
+		}
+
+		// Hash the password (simple example - in production use bcrypt)
+		hashedPassword := fmt.Sprintf("hashed_%s", user.PasswordHash)
+
+		// Insert into database
+		err := db.QueryRow(
+			"INSERT INTO users (username, password_hash, email) VALUES ($1, $2, $3) RETURNING id",
+			user.Username, hashedPassword, user.Email,
+		).Scan(&user.ID)
+
+		if err != nil {
+			http.Error(w, "Failed to register user - " + err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Return success response
+		response := AuthResponse{
+			ID:       user.ID,
+			Username: user.Username,
+			Email:    user.Email,
+			Message:  "User registered successfully",
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(response)
+	})
+
+	mux.HandleFunc("POST /api/login", func(w http.ResponseWriter, r *http.Request) {
+		var creds User
+		if err := json.NewDecoder(r.Body).Decode(&creds); err != nil {
+			http.Error(w, "Invalid request payload", http.StatusBadRequest)
+			return
+		}
+
+		var storedUser User
+		err := db.QueryRow(
+			"SELECT id, username, password_hash FROM users WHERE username = $1",
+			creds.Username,
+		).Scan(&storedUser.ID, &storedUser.Username, &storedUser.PasswordHash)
+
+		if err != nil {
+			http.Error(w, "Failed to authenticate user - " + err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		// In a real application, you would compare the hashed password
+		if storedUser.PasswordHash != fmt.Sprintf("hashed_%s", creds.PasswordHash) {
+			http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(storedUser)
+	})
+
 	// GET: Fetch all To-Dos
-	mux.HandleFunc("GET /todos", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /api/todos", func(w http.ResponseWriter, r *http.Request) {
 		rows, err := db.Query("SELECT id, title, description, is_completed FROM todos")
 		if err != nil {
 			http.Error(w, "Failed to query database", http.StatusInternalServerError)
@@ -90,7 +192,7 @@ func main() {
 	})
 
 	// POST: Create a new To-Do
-	mux.HandleFunc("POST /todos", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("POST /api/todos", func(w http.ResponseWriter, r *http.Request) {
 		var t Todo
 		if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
 			http.Error(w, "Invalid request payload", http.StatusBadRequest)
@@ -120,5 +222,5 @@ func main() {
 	}
 
 	fmt.Printf("Server starting on port %s...\n", port)
-	log.Fatal(http.ListenAndServe(":"+port, mux))
+	log.Fatal(http.ListenAndServe(":"+port, corsMiddleware(mux)))
 }
