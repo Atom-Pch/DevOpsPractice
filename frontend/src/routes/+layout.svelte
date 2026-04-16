@@ -3,6 +3,11 @@
 	import favicon from '$lib/assets/favicon.svg';
 
 	let { children } = $props();
+
+	function handleLogout() {
+		document.cookie = `logged_in=false; username=''; path=/`;
+		window.location.href = '/login';
+	}
 </script>
 
 <nav>
@@ -15,6 +20,8 @@
 			</div>
 		</div>
 		<div class="flex items-center justify-end space-x-4">
+			<button onclick={handleLogout}>Logout ()</button>
+			<div class="border-l border-gray-300 h-6"></div>
 			<a href="/register">Register</a>
 			<a href="/login">Login</a>
 		</div>
