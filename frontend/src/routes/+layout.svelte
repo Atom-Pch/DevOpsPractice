@@ -5,7 +5,7 @@
 
 	let { children } = $props();
 
-	const API_URL = import.meta.env.VITE_PUBLIC_API_URL || 'http://localhost:8080';
+	const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 	let currentUser: string | null = $state(null);
 	async function handleLogout() {

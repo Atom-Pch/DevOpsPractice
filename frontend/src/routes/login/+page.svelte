@@ -1,6 +1,6 @@
 <script lang="ts">
 	// Access the environment variable. It defaults to localhost if not set.
-	const API_URL = import.meta.env.VITE_PUBLIC_API_URL || 'http://localhost:8080';
+	const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 	let username = $state('');
 	let password = $state('');
