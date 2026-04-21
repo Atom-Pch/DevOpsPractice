@@ -5,7 +5,6 @@
 	</p>
 	<br />
 	<p>To get started, create an account or log in to your existing account.</p>
-	<p>Welcome,!</p>
 	<br><hr /><br>
 	<a href="/todos">View To-Do List, require login</a>
 </main>

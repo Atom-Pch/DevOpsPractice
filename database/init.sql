@@ -16,7 +16,8 @@ CREATE TABLE
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
         title VARCHAR(100) NOT NULL,
-        description TEXT,
+        description VARCHAR(255),
+        image_url VARCHAR(255),
         is_completed BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP
         WITH
