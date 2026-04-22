@@ -9,6 +9,8 @@
 	let newTitle = $state('');
 	let newDescription = $state('');
 	let error = $state('');
+	let imageFile = $state(<FileList | null>(null));
+	let isUploading = $state(false);
 
 	// Fetch the To-Dos as soon as the page loads
 	onMount(async () => {
@@ -41,31 +43,61 @@
 	async function addTodo(event: Event) {
 		event.preventDefault(); // Prevent the form from refreshing the page
 		error = '';
+		isUploading = true;
+		let finalImageUrl = '';
 
 		try {
+			// 1. If an image is selected, handle the S3 upload first
+			if (imageFile && imageFile.length > 0) {
+				const file = imageFile[0];
+
+				// Get the presigned URL from Go
+				const presignRes = await fetch(
+					`${API_URL}/api/todos/s3-presign?filename=${encodeURIComponent(file.name)}`,
+					{
+						credentials: 'include'
+					}
+				);
+				const presignData = await presignRes.json();
+
+				// Upload the file directly to AWS S3
+				const uploadRes = await fetch(presignData.upload_url, {
+					method: 'PUT',
+					body: file,
+					headers: {
+						'Content-Type': file.type
+					}
+				});
+
+				if (!uploadRes.ok) throw new Error('Failed to upload image to S3');
+				finalImageUrl = presignData.image_url;
+			}
+
+			// 2. Save the To-Do item to the Go backend
 			const res = await fetch(`${API_URL}/api/todos`, {
 				method: 'POST',
-				credentials: 'include', // Important for session cookie
-				headers: {
-					'Content-Type': 'application/json'
-				},
+				headers: { 'Content-Type': 'application/json' },
+				credentials: 'include',
 				body: JSON.stringify({
 					title: newTitle,
-					description: newDescription
+					description: newDescription,
+					image_url: finalImageUrl // Send the S3 URL to your DB
 				})
 			});
 
 			if (res.ok) {
 				const newTodo = await res.json();
-				todos = [...todos, newTodo]; // Update the UI state
-				newTitle = ''; // Clear the form
+				todos = [...todos, newTodo];
+				newTitle = '';
 				newDescription = '';
+				imageFile = null; // Clear the file input
 			} else {
 				error = 'Failed to create To-Do.';
 			}
 		} catch (err) {
-			error = 'Could not connect to the API to save the To-Do.';
-			console.error(err);
+			console.error("Error creating To-Do:", err);
+		} finally {
+			isUploading = false;
 		}
 	}
 
@@ -96,7 +128,10 @@
 	<form onsubmit={addTodo}>
 		<input type="text" placeholder="To-Do Title" bind:value={newTitle} required />
 		<input type="text" placeholder="Description (Optional)" bind:value={newDescription} />
-		<button type="submit">Add</button>
+		<div class="flex flex-col space-y-1 w-1/4">
+			<input type="file" accept="image/*" bind:files={imageFile} />
+			<button type="submit">Add</button>
+		</div>
 	</form>
 
 	<ul>
@@ -106,13 +141,16 @@
 				{#if todo.description}
 					<p>{todo.description}</p>
 				{/if}
+				{#if todo.image_url}
+                    <img src={todo.image_url} alt="Task attachment" style="max-width: 200px; margin-top: 10px; border-radius: 4px;" />
+                {/if}
 			</li>
 			<div class="del-block">
 				<button class="delete-btn" onclick={() => deleteTodo(todo.id)}>Delete </button>
 			</div>
 		{/each}
 		{#if todos.length === 0 && !error}
-			<p class="empty-state">No tasks yet. Create one above to test the database!</p>
+			<p class="empty-state">No tasks yet. Create one above!</p>
 		{/if}
 	</ul>
 </main>
@@ -142,6 +180,7 @@
 		border: 1px solid #d1d5db;
 		border-radius: 6px;
 		color: #363636;
+		background-color: #e0e0e0;
 	}
 	button {
 		padding: 0.75rem 1.5rem;
@@ -177,12 +216,12 @@
 		font-style: italic;
 	}
 	.delete-btn {
-        background: #e0e0e0;
-        color: #ef4444;
-        border: 1px solid #ef4444;
-        padding: 0.5rem 1rem;
+		background: #e0e0e0;
+		color: #ef4444;
+		border: 1px solid #ef4444;
+		padding: 0.5rem 1rem;
 		margin-bottom: 1rem;
-    }
+	}
 	.del-block {
 		display: flex;
 		justify-content: flex-end;

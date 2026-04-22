@@ -37,6 +37,10 @@
 				currentUser = data.username; // We found the user!
 			} else {
 				currentUser = null; // No valid session
+				// NEW LOGIC: If the user doesn't exist anymore, destroy the zombie cookie
+                if (res.status === 404 || res.status === 401) {
+                    await fetch(`${API_URL}/api/logout`, { method: 'POST', credentials: 'include' });
+                }
 			}
 		} catch (err) {
 			currentUser = null;

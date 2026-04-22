@@ -8,9 +8,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"slices"
+	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq" // Import the PostgreSQL driver anonymously
 	"golang.org/x/crypto/bcrypt"
 )
@@ -20,6 +25,7 @@ type Todo struct {
 	ID          int    `json:"id"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
+	ImageURL    string `json:"image_url"`
 	IsCompleted bool   `json:"is_completed"`
 }
 
@@ -34,11 +40,17 @@ type contextKey string
 
 const userIDKey = contextKey("user_id")
 
+var allowedOrigin = []string{
+	"http://localhost:5173",
+	"http://localhost:3000",
+	"http://xyz",
+}
+
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 1. Get the origin of the request (e.g., http://localhost:5173)
 		origin := r.Header.Get("Origin")
-		if origin != "" {
+		if slices.Contains(allowedOrigin, origin) {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 		}
 
@@ -98,6 +110,11 @@ func requireAuth(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file | " + err.Error())
+	}
+
 	// 1. Database Connection Configuration
 	// We read these from the environment. Later, Docker and Terraform will inject these!
 	dbUser := os.Getenv("DB_USER")
@@ -111,7 +128,7 @@ func main() {
 	}
 
 	// Construct the connection string
-	connStr := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable",
+	connStr := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=prefer",
 		dbHost, dbUser, dbPass, dbName)
 
 	// Open the database connection
@@ -127,6 +144,16 @@ func main() {
 	} else {
 		fmt.Println("Successfully connected to PostgreSQL!")
 	}
+
+	// Initialize AWS S3 Client
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		log.Fatalf("unable to load AWS SDK config, %v", err)
+	}
+	// We need BOTH clients now:
+	standardS3Client := s3.NewFromConfig(cfg)              // Used for direct actions (like Delete)
+	presignClient := s3.NewPresignClient(standardS3Client) // Used for temporary URLs
+	bucketName := os.Getenv("S3_BUCKET_NAME")
 
 	// 2. Setup API Routes
 	// We use the standard HTTP multiplexer (router)
@@ -256,6 +283,14 @@ func main() {
 			return
 		}
 
+		var exists bool
+		err = db.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE id=$1)", userID).Scan(&exists)
+		if err != nil || !exists {
+			// If the DB query fails, or the user is missing, reject the request
+			http.Error(w, "Unauthorized: User no longer exists", http.StatusUnauthorized)
+			return
+		}
+
 		// 5. Return the username to SvelteKit
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
@@ -268,10 +303,10 @@ func main() {
 	mux.HandleFunc("GET /api/todos", requireAuth(
 		func(w http.ResponseWriter, r *http.Request) {
 			userID := r.Context().Value(userIDKey).(int)
-			rows, err := db.Query("SELECT id, title, description, is_completed FROM todos WHERE user_id=$1", userID)
+			rows, err := db.Query("SELECT id, title, description, image_url, is_completed FROM todos WHERE user_id=$1", userID)
 
 			if err != nil {
-				http.Error(w, "Failed to query database |"+err.Error(), http.StatusInternalServerError)
+				http.Error(w, "Failed to query database | "+err.Error(), http.StatusInternalServerError)
 				return
 			}
 			defer rows.Close()
@@ -279,20 +314,76 @@ func main() {
 			var todos []Todo
 			for rows.Next() {
 				var t Todo
-				// We use sql.NullString for description in case it's empty in the DB
-				var desc sql.NullString
-				if err := rows.Scan(&t.ID, &t.Title, &desc, &t.IsCompleted); err != nil {
-					http.Error(w, "Failed to parse data |"+err.Error(), http.StatusInternalServerError)
+				// We use sql.NullString for description and ImageURL in case it's empty in the DB
+				var desc, imageURL sql.NullString
+				if err := rows.Scan(&t.ID, &t.Title, &desc, &imageURL, &t.IsCompleted); err != nil {
+					http.Error(w, "Failed to parse data | "+err.Error(), http.StatusInternalServerError)
 					return
 				}
 				if desc.Valid {
 					t.Description = desc.String
 				}
+				if imageURL.Valid {
+					t.ImageURL = imageURL.String
+				}
+
+				// --- NEW: Generate GET Presigned URL ---
+				if imageURL.Valid && imageURL.String != "" {
+					// Extract just the filename from the end of the saved URL
+					parts := strings.Split(imageURL.String, "/")
+					objectKey := parts[len(parts)-1]
+
+					// Ask AWS for a 1-hour viewing pass
+					req, err := presignClient.PresignGetObject(r.Context(), &s3.GetObjectInput{
+						Bucket: &bucketName,
+						Key:    &objectKey,
+					}, s3.WithPresignExpires(time.Hour*1))
+
+					if err == nil {
+						// Swap the permanent DB URL for the temporary viewing URL!
+						t.ImageURL = req.URL
+					} else {
+						log.Printf("Failed to presign GET for %s: %v", objectKey, err)
+						t.ImageURL = imageURL.String // Fallback
+					}
+				}
+
 				todos = append(todos, t)
 			}
 
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(todos)
+		}))
+
+	// GET: Generate a Presigned URL for S3 Upload
+	mux.HandleFunc("GET /api/todos/s3-presign",
+		requireAuth(func(w http.ResponseWriter, r *http.Request) {
+			filename := r.URL.Query().Get("filename")
+			if filename == "" {
+				http.Error(w, "Filename is required", http.StatusBadRequest)
+				return
+			}
+
+			// Generate a unique filename to prevent overwriting
+			uniqueFilename := fmt.Sprintf("%d_%s", time.Now().Unix(), filename)
+
+			// Ask AWS for the temporary upload URL
+			req, err := presignClient.PresignPutObject(r.Context(), &s3.PutObjectInput{
+				Bucket: &bucketName,
+				Key:    &uniqueFilename,
+			}, s3.WithPresignExpires(time.Minute*5))
+
+			if err != nil {
+				http.Error(w, "Failed to sign put request | "+err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			// Send the URL back to SvelteKit
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]string{
+				"upload_url": req.URL,
+				"image_url":  fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", bucketName, os.Getenv("AWS_REGION"), uniqueFilename),
+			})
 		}))
 
 	// POST: Create a new To-Do
@@ -302,19 +393,39 @@ func main() {
 
 			var t Todo
 			if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
-				http.Error(w, "Invalid request payload |"+err.Error(), http.StatusBadRequest)
+				http.Error(w, "Invalid request payload | "+err.Error(), http.StatusBadRequest)
 				return
 			}
 
 			// Insert into DB and return the new ID
 			err := db.QueryRow(
-				"INSERT INTO todos (user_id, title, description) VALUES ($1, $2, $3) RETURNING id",
-				userID, t.Title, t.Description,
+				"INSERT INTO todos (user_id, title, description, image_url) VALUES ($1, $2, $3, $4) RETURNING id",
+				userID, t.Title, t.Description, t.ImageURL,
 			).Scan(&t.ID)
 
 			if err != nil {
-				http.Error(w, "Failed to create To-Do |"+err.Error(), http.StatusInternalServerError)
+				http.Error(w, "Failed to create To-Do | "+err.Error(), http.StatusInternalServerError)
 				return
+			}
+
+			// --- NEW FIX: Generate a viewing pass for the newly created item! ---
+			if t.ImageURL != "" {
+				parts := strings.Split(t.ImageURL, "/")
+				objectKey := parts[len(parts)-1]
+
+				// Ask AWS for a 1-hour viewing pass just like we do in GET /todos
+				req, err := presignClient.PresignGetObject(r.Context(), &s3.GetObjectInput{
+					Bucket: &bucketName,
+					Key:    &objectKey,
+				}, s3.WithPresignExpires(time.Hour*1))
+
+				if err == nil {
+					// Swap the permanent DB URL for the temporary viewing URL
+					// before sending it back to SvelteKit!
+					t.ImageURL = req.URL
+				} else {
+					log.Printf("Warning: Failed to presign POST response for %s: %v", objectKey, err)
+				}
 			}
 
 			w.Header().Set("Content-Type", "application/json")
@@ -322,7 +433,6 @@ func main() {
 			json.NewEncoder(w).Encode(t)
 		}))
 
-	// DELETE: Remove a To-Do
 	// DELETE: Remove a To-Do
 	mux.HandleFunc("DELETE /api/todos/{id}",
 		requireAuth(func(w http.ResponseWriter, r *http.Request) {
@@ -335,7 +445,15 @@ func main() {
 				http.Error(w, "Missing To-Do ID", http.StatusBadRequest)
 				return
 			}
-			
+
+			// 1. Fetch the image URL first so we know what to delete from S3
+			var imgUrl sql.NullString
+			err := db.QueryRow("SELECT image_url FROM todos WHERE id = $1 AND user_id = $2", todoID, userID).Scan(&imgUrl)
+			if err != nil {
+				http.Error(w, "To-Do not found or unauthorized | "+err.Error(), http.StatusNotFound)
+				return
+			}
+
 			var todoTitle string
 			err = db.QueryRow("SELECT title FROM todos WHERE id = $1", todoID).Scan(&todoTitle)
 			if err != nil {
@@ -358,7 +476,25 @@ func main() {
 				return
 			}
 
-			w.WriteHeader(http.StatusOK)
+			// 3. --- NEW: Delete the actual file from AWS S3 ---
+			if imgUrl.Valid && imgUrl.String != "" {
+				parts := strings.Split(imgUrl.String, "/")
+				objectKey := parts[len(parts)-1]
+
+				// Send the delete command directly to AWS
+				_, s3Err := standardS3Client.DeleteObject(r.Context(), &s3.DeleteObjectInput{
+					Bucket: &bucketName,
+					Key:    &objectKey,
+				})
+
+				if s3Err != nil {
+					// We log this instead of failing the whole request, since the DB row is already gone
+					http.Error(w, "Warning: Failed to delete image from S3 | " + s3Err.Error(), http.StatusInternalServerError)
+				} else {
+					http.Error(w, "Successfully cleaned ups from S3 | " + objectKey, http.StatusOK)
+				}
+			}
+
 			w.Write([]byte(`{"message": "To-Do '` + todoTitle + `' deleted successfully"}`))
 		}))
 
