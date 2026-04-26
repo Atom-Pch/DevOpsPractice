@@ -36,124 +36,50 @@
     }
 </script>
 
-<div class="login-container">
-	<div class="login-card">
-		<h1>Login</h1>
+<div class="min-h-[80vh] flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
+	<div class="w-full max-w-md bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 p-8 sm:p-10">
+		<h1 class="text-3xl font-bold text-center text-white mb-8">Welcome Back</h1>
 
 		{#if errorMessage}
-			<div class="error-message">{errorMessage}</div>
+			<div class="mb-6 bg-red-900/50 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg text-sm text-center shadow-sm flex items-center justify-center gap-2">
+				<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+				{errorMessage}
+			</div>
 		{/if}
 
-		<form onsubmit={handleLogin}>
-			<div class="form-group">
-				<label for="username">Username</label>
+		<form onsubmit={handleLogin} class="space-y-6">
+			<div>
+				<label for="username" class="block text-sm font-medium text-gray-300 mb-2">Username</label>
 				<input
 					type="text"
 					id="username"
 					bind:value={username}
 					placeholder="Enter your username"
 					required
+					class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
 				/>
 			</div>
 
-			<div class="form-group">
-				<label for="password">Password</label>
+			<div>
+				<label for="password" class="block text-sm font-medium text-gray-300 mb-2">Password</label>
 				<input
 					type="password"
 					id="password"
 					bind:value={password}
 					placeholder="Enter your password"
 					required
+					class="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
 				/>
 			</div>
 
-			<button type="submit" class="login-btn">Login</button>
+			<button type="submit" class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-md text-base font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-gray-900 transition-all transform hover:-translate-y-0.5">
+				Log in
+			</button>
 		</form>
+		
+		<p class="mt-8 text-center text-sm text-gray-400">
+			Don't have an account? 
+			<a href="/register" class="font-medium text-indigo-400 hover:text-indigo-300 transition hover:underline">Register here</a>
+		</p>
 	</div>
 </div>
-
-<style>
-	.login-container {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		min-height: 50vh;
-	}
-
-	.login-card {
-		background: #363636;
-		padding: 2rem;
-		border-radius: 8px;
-		box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-		width: 100%;
-		max-width: 400px;
-	}
-
-	h1 {
-		text-align: center;
-		color: #e0e0e0;
-		margin-bottom: 1.5rem;
-		font-size: 1.5rem;
-	}
-
-	.error-message {
-		background-color: #fee;
-		color: #c33;
-		padding: 0.75rem;
-		border-radius: 4px;
-		margin-bottom: 1rem;
-		text-align: center;
-	}
-
-	.form-group {
-		margin-bottom: 1.5rem;
-	}
-
-	label {
-		display: block;
-		margin-bottom: 0.5rem;
-		color: #e0e0e0;
-		font-weight: 500;
-	}
-
-	input {
-		width: 100%;
-		padding: 0.75rem;
-		border: 1px solid #ddd;
-		border-radius: 4px;
-		font-size: 1rem;
-		box-sizing: border-box;
-		transition: border-color 0.3s;
-		color: #363636;
-	}
-
-	input:focus {
-		outline: none;
-		border-color: #667eea;
-		box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-	}
-
-	.login-btn {
-		width: 100%;
-		padding: 0.75rem;
-		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-		color: white;
-		border: none;
-		border-radius: 4px;
-		font-size: 1rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition:
-			transform 0.2s,
-			box-shadow 0.2s;
-	}
-
-	.login-btn:hover {
-		transform: translateY(-2px);
-		box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-	}
-
-	.login-btn:active {
-		transform: translateY(0);
-	}
-</style>

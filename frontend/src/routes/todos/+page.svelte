@@ -35,6 +35,7 @@
 				error = 'Failed to load To-Dos from the server.';
 			}
 		} catch (err) {
+			goto('/login')
 			error = 'Could not connect to the API. Is the Go backend running?';
 			console.error(err);
 		}
@@ -120,110 +121,96 @@
 	}
 </script>
 
-<main>
+<main class="w-full max-w-3xl mx-auto pt-8 sm:pt-12 pb-24 px-4 sm:px-6">
+	<div class="flex items-center justify-between mb-8">
+		<h1 class="text-3xl sm:text-4xl font-bold text-white tracking-tight">Your Tasks</h1>
+		<span class="bg-gray-800 text-indigo-400 py-1.5 px-4 rounded-full text-sm font-semibold border border-gray-700 shadow-sm">
+			{todos.length} {todos.length === 1 ? 'Task' : 'Tasks'}
+		</span>
+	</div>
+
 	{#if error}
-		<div class="error-banner">{error}</div>
+		<div class="mb-8 bg-red-900/50 border border-red-500/50 text-red-200 p-4 rounded-xl flex items-center shadow-sm">
+			<svg class="w-6 h-6 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+			<p class="text-sm font-medium">{error}</p>
+		</div>
 	{/if}
 
-	<form onsubmit={addTodo}>
-		<input type="text" placeholder="To-Do Title" bind:value={newTitle} required />
-		<input type="text" placeholder="Description (Optional)" bind:value={newDescription} />
-		<div class="flex flex-col space-y-1 w-1/4">
-			<input type="file" accept="image/*" bind:files={imageFile} />
-			<button type="submit">Add</button>
-		</div>
-	</form>
-
-	<ul>
-		{#each todos.toReversed() as todo}
-			<li>
-				<strong>{todo.title}</strong>
-				{#if todo.description}
-					<p>{todo.description}</p>
-				{/if}
-				{#if todo.image_url}
-                    <img src={todo.image_url} alt="Task attachment" style="max-width: 200px; margin-top: 10px; border-radius: 4px;" />
-                {/if}
-			</li>
-			<div class="del-block">
-				<button class="delete-btn" onclick={() => deleteTodo(todo.id)}>Delete </button>
+	<div class="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 p-5 sm:p-6 mb-10 transition-all focus-within:ring-2 focus-within:ring-indigo-500">
+		<form onsubmit={addTodo} class="flex flex-col sm:flex-row gap-4">
+			<div class="flex-1 flex flex-col gap-3">
+				<input 
+					type="text" 
+					placeholder="What needs to be done?" 
+					bind:value={newTitle} 
+					required 
+					class="w-full bg-transparent border-b-2 border-gray-600 focus:border-indigo-500 px-2 py-2 text-lg text-white placeholder-gray-500 focus:outline-none transition"
+				/>
+				<input 
+					type="text" 
+					placeholder="Add description (Optional)" 
+					bind:value={newDescription} 
+					class="w-full bg-transparent border-b border-gray-700 focus:border-indigo-500 px-2 py-1 text-sm text-gray-400 placeholder-gray-600 focus:outline-none transition"
+				/>
 			</div>
+			
+			<div class="flex flex-row sm:flex-col items-center sm:items-stretch gap-3 sm:w-44 flex-shrink-0 justify-between mt-3 sm:mt-0">
+				<label class="flex-1 cursor-pointer w-full text-center py-2.5 px-3 border border-gray-600 rounded-xl text-xs font-medium text-gray-300 hover:bg-gray-700 hover:text-white transition flex items-center justify-center truncate">
+					<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+					{imageFile && imageFile.length > 0 ? imageFile[0].name : 'Attach Image'}
+					<input type="file" accept="image/*" bind:files={imageFile} class="hidden" />
+				</label>
+
+				<button 
+					type="submit" 
+					disabled={isUploading}
+					class="flex-1 sm:flex-none py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl shadow-md transition transform hover:-translate-y-0.5 flex justify-center items-center"
+				>
+					{#if isUploading}
+						<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+						Adding...
+					{:else}
+						Add Task
+					{/if}
+				</button>
+			</div>
+		</form>
+	</div>
+
+	<ul class="space-y-4">
+		{#each todos.toReversed() as todo}
+			<li class="bg-gray-800 rounded-2xl p-5 sm:p-6 shadow-md border border-gray-700 hover:border-gray-600 transition group flex flex-col sm:flex-row gap-4 sm:items-start justify-between">
+				<div class="flex-1 min-w-0">
+					<h3 class="text-xl font-semibold text-gray-100 break-words">{todo.title}</h3>
+					{#if todo.description}
+						<p class="mt-2 text-gray-400 text-md leading-relaxed whitespace-pre-wrap break-words">{todo.description}</p>
+					{/if}
+					{#if todo.image_url}
+						<div class="mt-4 overflow-hidden rounded-xl border border-gray-700 inline-block max-w-full">
+							<img src={todo.image_url} alt="Task attachment" class="max-h-64 sm:max-h-80 object-cover object-center w-auto shadow-sm" />
+						</div>
+					{/if}
+				</div>
+				
+				<div class="sm:opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 flex sm:flex-col justify-end sm:justify-start items-center">
+					<button 
+						class="text-red-400 hover:text-red-300 hover:bg-red-900/30 p-2 rounded-lg transition" 
+						onclick={() => deleteTodo(todo.id)}
+						aria-label="Delete task"
+						title="Delete"
+					>
+						<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+					</button>
+				</div>
+			</li>
 		{/each}
+		
 		{#if todos.length === 0 && !error}
-			<p class="empty-state">No tasks yet. Create one above!</p>
+			<div class="text-center py-16 px-4 bg-gray-800/40 rounded-2xl border border-gray-700 border-dashed">
+				<svg class="mx-auto h-12 w-12 text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+				<h3 class="text-lg font-medium text-gray-300">No tasks yet</h3>
+				<p class="mt-1 text-sm text-gray-500">Get started by creating a new task above.</p>
+			</div>
 		{/if}
 	</ul>
 </main>
-
-<style>
-	main {
-		max-width: 50vw;
-		margin: 3rem auto;
-		padding: 0 1rem;
-	}
-	.error-banner {
-		background-color: #fee2e2;
-		color: #991b1b;
-		padding: 1rem;
-		border-radius: 6px;
-		margin-bottom: 1rem;
-		text-align: center;
-	}
-	form {
-		display: flex;
-		gap: 0.5rem;
-		margin-bottom: 2rem;
-	}
-	input {
-		flex: 1;
-		padding: 0.75rem;
-		border: 1px solid #d1d5db;
-		border-radius: 6px;
-		color: #363636;
-		background-color: #e0e0e0;
-	}
-	button {
-		padding: 0.75rem 1.5rem;
-		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-		color: white;
-		border: none;
-		border-radius: 6px;
-		cursor: pointer;
-		font-weight: bold;
-	}
-	ul {
-		list-style: none;
-		padding: 0;
-	}
-	li {
-		background: #575757;
-		padding: 1.5rem;
-		border-radius: 8px;
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-		border: 1px solid #e5e7eb;
-	}
-	li strong {
-		display: block;
-		font-size: 1.1rem;
-	}
-	li p {
-		margin: 0.5rem 0 0 0;
-		color: #e0e0e0;
-	}
-	.empty-state {
-		text-align: center;
-		color: #97a2b6;
-		font-style: italic;
-	}
-	.delete-btn {
-		background: #e0e0e0;
-		color: #ef4444;
-		border: 1px solid #ef4444;
-		padding: 0.5rem 1rem;
-		margin-bottom: 1rem;
-	}
-	.del-block {
-		display: flex;
-		justify-content: flex-end;
-	}
-</style>
