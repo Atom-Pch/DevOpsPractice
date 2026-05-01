@@ -14,6 +14,8 @@ module "vpc" {
   private_subnet_names = ["todo-subnet-private1-us-east-2a", "todo-subnet-private2-us-east-2b"]
 
   enable_nat_gateway = false
+  enable_dns_hostnames = true
+  enable_dns_support   = true
 
   create_igw = true
   igw_tags = {

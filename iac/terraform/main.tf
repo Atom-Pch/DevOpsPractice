@@ -61,6 +61,7 @@ module "container" {
   alb_tg = module.load_balancer.alb_tg
   todo_env_policy = module.iam.todo_env_policy
   todo_files_policy = module.iam.todo_files_policy
+  alb_dns = module.load_balancer.alb_dns
 }
 
 module "iam" {
@@ -71,4 +72,5 @@ module "storage" {
   source = "./storage"
 
   aws_region = var.aws_region
+  alb_dns = module.load_balancer.alb_dns
 }

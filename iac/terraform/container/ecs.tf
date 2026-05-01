@@ -25,10 +25,10 @@ module "ecs" {
             }
           ]
 
-          environmentFiles = [
+          environment = [
             {
-              value = "arn:aws:s3:::todo-env-131912109503-us-east-2-an/frontned/.env"
-              type  = "s3"
+              name  = "VITE_API_URL",
+              value = var.alb_dns
             }
           ]
         }

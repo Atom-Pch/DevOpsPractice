@@ -4,3 +4,6 @@ output "alb_sg" {
 output "alb_tg" {
   value = module.alb.target_groups
 }
+output "alb_dns" {
+  value = module.alb.dns_name
+}
