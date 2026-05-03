@@ -16,6 +16,7 @@ const userIDKey = contextKey("user_id")
 var allowedOrigin = []string{
 	"http://localhost:5173",
 	"http://localhost:3000",
+	"http://todo-app-alb-901517651.us-east-2.elb.amazonaws.com",
 }
 
 // Global Middleware for CORS
