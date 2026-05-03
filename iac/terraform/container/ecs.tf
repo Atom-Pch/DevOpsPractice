@@ -46,8 +46,7 @@ module "ecs" {
       subnet_ids         = var.private_subnets
       assign_public_ip   = false
 
-      task_exec_iam_role_policies = {
-        env_policy   = var.todo_env_policy
+      tasks_iam_role_policies = {
         files_policy = var.todo_files_policy
       }
     }
@@ -97,7 +96,7 @@ module "ecs" {
           secrets = [
             {
               name = "DB_PASS"
-              valueFrom = "arn:aws:secretsmanager:us-east-2:131912109503:secret:rds!db-f7c461f3-645c-40ac-891a-590b5c39d73a-QUSUCP:password::"
+              valueFrom = "arn:aws:secretsmanager:us-east-2:131912109503:secret:rds!db-f7c461f3-645c-40ac-891a-590b5c39d73a-QUSUCP"
             }
           ]
 
@@ -122,14 +121,12 @@ module "ecs" {
       subnet_ids         = var.private_subnets
       assign_public_ip   = false
 
-      task_exec_iam_role_policies = {
+      tasks_iam_role_policies = {
         env_policy   = var.todo_env_policy
         files_policy = var.todo_files_policy
       }
     }
   }
-
-  task_exec_secret_arns = []
 
   create_security_group     = false
   create_task_exec_iam_role = true
