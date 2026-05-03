@@ -16,7 +16,7 @@ module "todo_bucket" {
     {
       allowed_headers = ["*"],
       allowed_methods = ["GET", "PUT", "DELETE"],
-      allowed_origins = [var.alb_dns],
+      allowed_origins = ["http://${var.alb_dns}"],
       max_age_seconds = 3600
     }
   ]
