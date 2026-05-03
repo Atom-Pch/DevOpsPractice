@@ -1,9 +1,9 @@
-module "ecr_sg" {
+module "vpce_sg" {
   source  = "terraform-aws-modules/security-group/aws"
   version = ">= 5.3.1"
 
-  name        = "ecr-endpoints-sg"
-  description = "Allow ECR connections for VPC endpoint"
+  name        = "vpce-endpoints-sg"
+  description = "Allow connections for VPC endpoint"
   vpc_id      = module.vpc.vpc_id
 
   ingress_rules       = ["https-443-tcp"]
@@ -27,7 +27,7 @@ resource "aws_vpc_endpoint" "ecr-dkr" {
   service_name       = "com.amazonaws.${var.aws_region}.ecr.dkr"
   vpc_endpoint_type  = "Interface"
   subnet_ids         = module.vpc.private_subnets
-  security_group_ids = [module.ecr_sg.security_group_id]
+  security_group_ids = [module.vpce_sg.security_group_id]
 
   private_dns_enabled = true
 
@@ -41,7 +41,7 @@ resource "aws_vpc_endpoint" "ecr-api" {
   service_name       = "com.amazonaws.${var.aws_region}.ecr.api"
   vpc_endpoint_type  = "Interface"
   subnet_ids         = module.vpc.private_subnets
-  security_group_ids = [module.ecr_sg.security_group_id]
+  security_group_ids = [module.vpce_sg.security_group_id]
 
   private_dns_enabled = true
 
@@ -55,7 +55,7 @@ resource "aws_vpc_endpoint" "logs" {
   service_name       = "com.amazonaws.${var.aws_region}.logs"
   vpc_endpoint_type  = "Interface"
   subnet_ids         = module.vpc.private_subnets
-  security_group_ids = [module.ecr_sg.security_group_id]
+  security_group_ids = [module.vpce_sg.security_group_id]
 
   private_dns_enabled = true
 
@@ -69,11 +69,53 @@ resource "aws_vpc_endpoint" "secret" {
   service_name       = "com.amazonaws.${var.aws_region}.secretsmanager"
   vpc_endpoint_type  = "Interface"
   subnet_ids         = module.vpc.private_subnets
-  security_group_ids = [module.ecr_sg.security_group_id]
+  security_group_ids = [module.vpce_sg.security_group_id]
 
   private_dns_enabled = true
 
   tags = {
     Name = "todo-vpce-secret-manager"
+  }
+}
+
+resource "aws_vpc_endpoint" "ssm" {
+  vpc_id             = module.vpc.vpc_id
+  service_name       = "com.amazonaws.${var.aws_region}.ssm"
+  vpc_endpoint_type  = "Interface"
+  subnet_ids         = module.vpc.private_subnets
+  security_group_ids = [module.vpce_sg.security_group_id]
+
+  private_dns_enabled = true
+
+  tags = {
+    Name = "todo-vpce-ssm"
+  }
+}
+
+resource "aws_vpc_endpoint" "ssm_msg" {
+  vpc_id             = module.vpc.vpc_id
+  service_name       = "com.amazonaws.${var.aws_region}.ssmmessages"
+  vpc_endpoint_type  = "Interface"
+  subnet_ids         = module.vpc.private_subnets
+  security_group_ids = [module.vpce_sg.security_group_id]
+
+  private_dns_enabled = true
+
+  tags = {
+    Name = "todo-vpce-ssmmsg"
+  }
+}
+
+resource "aws_vpc_endpoint" "ec2_msg" {
+  vpc_id             = module.vpc.vpc_id
+  service_name       = "com.amazonaws.${var.aws_region}.ec2messages"
+  vpc_endpoint_type  = "Interface"
+  subnet_ids         = module.vpc.private_subnets
+  security_group_ids = [module.vpce_sg.security_group_id]
+
+  private_dns_enabled = true
+
+  tags = {
+    Name = "todo-vpce-ec2msg"
   }
 }

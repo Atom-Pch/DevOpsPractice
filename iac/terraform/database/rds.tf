@@ -9,7 +9,9 @@ module "rds" {
   source  = "terraform-aws-modules/rds/aws"
   version = ">= 7.2.0"
 
-  vpc_security_group_ids = [module.rds_sg.security_group_id]
+  vpc_security_group_ids = [
+    module.rds_sg.security_group_id, aws_security_group.ssm_rds_sg.id
+  ]
 
   identifier        = "todo-db"
   allocated_storage = 20

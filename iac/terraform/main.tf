@@ -33,6 +33,7 @@ module "networks" {
 
   aws_region = var.aws_region
   vpc_cidr = "10.0.0.0/20"
+  ssm_rds_sg = module.database.ssm_rds_sg
 }
 
 module "database" {

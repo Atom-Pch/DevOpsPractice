@@ -1,3 +1,6 @@
 output "db_address" {
   value = module.rds.db_instance_address
 }
+output "ssm_rds_sg" {
+  value = aws_security_group.ssm_rds_sg.id
+}
