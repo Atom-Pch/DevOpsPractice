@@ -45,3 +45,4 @@ planout
 
 # Ansible
 ansible-env
+inventory.ini
