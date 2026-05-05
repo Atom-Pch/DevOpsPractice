@@ -31,6 +31,6 @@ variable "s3_env_arn" {
 variable "db_address" {
   description = "address of todo RDS"
 }
-variable "secret_arn" {
-  description = "DB ARN from Secret Manager"
+variable "rds_secret_arn" {
+  description = "RDS secrets ARN from Secret Manager"
 }

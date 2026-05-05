@@ -96,7 +96,7 @@ module "ecs" {
           secrets = [
             {
               name = "DB_PASS"
-              valueFrom = "${var.secret_arn}:password::"
+              valueFrom = "${var.rds_secret_arn}:password::"
             }
           ]
 

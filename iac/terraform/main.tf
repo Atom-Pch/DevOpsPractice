@@ -66,7 +66,7 @@ module "container" {
   s3_files_name = module.storage.s3_files_name
   s3_env_arn = module.storage.s3_env_arn
   db_address = module.database.db_address
-  secret_arn = module.database.secret_arn
+  rds_secret_arn = module.database.rds_secret_arn
 }
 
 module "iam" {
