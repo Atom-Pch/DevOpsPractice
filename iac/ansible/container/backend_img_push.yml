@@ -1,6 +1,6 @@
----
+--- # UNUSED. MOVED INTO CI/CD
 - name: Automate AWS backend ECR Push Latest
-  hosts: localhost
+  hosts: local
   gather_facts: false
   vars:
     aws_region: "us-east-2"
