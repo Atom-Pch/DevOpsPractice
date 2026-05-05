@@ -9,7 +9,7 @@ resource "aws_ecr_registry_scanning_configuration" "scan" {
   }
 }
 
-module "frontend-repo" {
+module "frontend_repo" {
   source  = "terraform-aws-modules/ecr/aws"
   version = ">= 3.2.0"
 
@@ -45,7 +45,7 @@ module "frontend-repo" {
   repository_force_delete = true
 }
 
-module "backend-repo" {
+module "backend_repo" {
   source  = "terraform-aws-modules/ecr/aws"
   version = ">= 3.2.0"
 
