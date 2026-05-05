@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"regexp"
 	"slices"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -13,17 +14,19 @@ type contextKey string
 
 const userIDKey = contextKey("user_id")
 
-var allowedOrigin = []string{
+var pattern = `^http://todo-app-alb-\d+\.us-east-2\.elb\.amazonaws\.com$`
+var alb_origin = regexp.MustCompile(pattern)
+
+var localhost_origin = []string{
 	"http://localhost:5173",
 	"http://localhost:3000",
-	"http://todo-app-alb-901517651.us-east-2.elb.amazonaws.com",
 }
 
 // Global Middleware for CORS
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
-		if slices.Contains(allowedOrigin, origin) {
+		if alb_origin.MatchString(origin) || slices.Contains(localhost_origin, origin) {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 		}
 
