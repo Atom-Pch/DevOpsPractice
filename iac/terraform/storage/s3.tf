@@ -19,7 +19,8 @@ module "todo_bucket" {
       allowed_origins = [
         "http://localhost:5173",
         "http://localhost:3000",
-        "http://${var.alb_dns}"
+        "http://${var.alb_dns}",
+        "https://onlytodo.xyz"
       ],
       max_age_seconds = 3600
     }

@@ -14,8 +14,8 @@ type contextKey string
 
 const userIDKey = contextKey("user_id")
 
-// var pattern = `^http://todo-app-alb-\d+\.us-east-2\.elb\.amazonaws\.com$`
-// var alb_origin = regexp.MustCompile(pattern)
+var pattern = `^http://todo-app-alb-\d+\.us-east-2\.elb\.amazonaws\.com$`
+var alb_origin = regexp.MustCompile(pattern)
 
 var localhost_origin = []string{
 	"http://localhost:5173",
@@ -27,7 +27,7 @@ var localhost_origin = []string{
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
-		if slices.Contains(localhost_origin, origin) { // || alb_origin.MatchString(origin) {
+		if slices.Contains(localhost_origin, origin) || alb_origin.MatchString(origin) {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 		}
 

@@ -19,9 +19,6 @@ variable "todo_env_policy" {
 variable "todo_files_policy" {
   description = "IAM policy for S3 access files"
 }
-variable "alb_dns" {
-  description = "DNS name from ALB"
-}
 variable "s3_files_name" {
   description = "name of todo files S3 bucket"
 }
