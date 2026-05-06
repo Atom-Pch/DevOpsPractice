@@ -53,7 +53,7 @@
 
 				// Get the presigned URL from Go
 				const presignRes = await fetch(
-					'/api/todos/s3-presign?filename=${encodeURIComponent(file.name)}',
+					`/api/todos/s3-presign?filename=${encodeURIComponent(file.name)}`,
 					{
 						credentials: 'include'
 					}
