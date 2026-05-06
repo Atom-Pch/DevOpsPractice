@@ -1,7 +1,4 @@
 <script lang="ts">
-	// Pull the API URL from your environment variables
-	const API_URL = import.meta.env.VITE_API_URL;
-
 	// State variables for your UI to bind to (adjust if you named yours differently)
 	let username = $state('');
 	let email = $state('');
@@ -14,7 +11,7 @@
 		errorMessage = '';
 
 		try {
-			const res = await fetch(`${API_URL}/api/register`, {
+			const res = await fetch(`/api/register`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'

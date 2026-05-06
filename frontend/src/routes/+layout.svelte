@@ -5,15 +5,13 @@
 
 	let { children } = $props();
 
-	const API_URL = import.meta.env.VITE_API_URL;
-
 	let currentUser: string | null = $state(null);
 	// NEW: Add the loading state, default to true so it blocks the UI immediately
 	let isCheckingAuth = $state(true);
 
 	async function handleLogout() {
 		try {
-			await fetch(`${API_URL}/api/logout`, {
+			await fetch(`/api/logout`, {
 				method: 'POST',
 				credentials: 'include'
 			});
@@ -32,14 +30,14 @@
 	// --- CHECK WHO IS LOGGED IN ---
 	async function checkSession() {
 		try {
-			const res = await fetch(`${API_URL}/api/me`, { credentials: 'include' });
+			const res = await fetch(`/api/me`, { credentials: 'include' });
 			if (res.ok) {
 				const data = await res.json();
 				currentUser = data.username;
 			} else {
 				currentUser = null; 
                 if (res.status === 404 || res.status === 401) {
-                    await fetch(`${API_URL}/api/logout`, { method: 'POST', credentials: 'include' });
+                    await fetch(`/api/logout`, { method: 'POST', credentials: 'include' });
                 }
 			}
 		} catch (err) {

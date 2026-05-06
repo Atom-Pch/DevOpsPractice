@@ -13,10 +13,10 @@ resource "aws_iam_policy" "S3_todo_env" {
         ],
         Effect : "Allow",
         Resource : [
-          "arn:aws:s3:::todo-env-131912109503-us-east-2-an",
-          "arn:aws:s3:::todo-env-131912109503-us-east-2-an/*",
-          "arn:aws:secretsmanager:us-east-2:131912109503:secret:rds!db-f7c461f3-645c-40ac-891a-590b5c39d73a-QUSUCP",
-          "arn:aws:secretsmanager:us-east-2:131912109503:secret:rds!db-f7c461f3-645c-40ac-891a-590b5c39d73a-QUSUCP:*"
+          "${var.s3_env_arn}",
+          "${var.s3_env_arn}/*",
+          "${var.rds_secret_arn}",
+          "${var.rds_secret_arn}:*"
         ]
       }
     ]
@@ -38,8 +38,8 @@ resource "aws_iam_policy" "S3_todo_files_getPutDel" {
         ],
         Effect : "Allow",
         Resource : [
-          "arn:aws:s3:::todo-files-131912109503-us-east-2-an",
-          "arn:aws:s3:::todo-files-131912109503-us-east-2-an/*"
+          "${var.s3_files_arn}",
+          "${var.s3_files_arn}/*"
         ]
       }
     ]

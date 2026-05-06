@@ -9,7 +9,7 @@ module "ecs" {
     todo-frontend-task = {
       cpu           = 1024
       memory        = 2048
-      desired_count = 2
+      desired_count = 1
 
       container_definitions = {
         frontend-container = {
@@ -22,13 +22,6 @@ module "ecs" {
               containerPort = 3000
               hostPort      = 3000
               protocol      = "tcp"
-            }
-          ]
-
-          environment = [
-            {
-              name  = "VITE_API_URL",
-              value = var.alb_dns
             }
           ]
         }
@@ -54,7 +47,7 @@ module "ecs" {
     todo-backend-task = {
       cpu           = 1024
       memory        = 2048
-      desired_count = 2
+      desired_count = 1
 
       container_definitions = {
         backend-container = {
@@ -122,8 +115,11 @@ module "ecs" {
       assign_public_ip   = false
 
       tasks_iam_role_policies = {
-        env_policy   = var.todo_env_policy
         files_policy = var.todo_files_policy
+      }
+
+      task_exec_iam_role_policies = {
+        env_policy   = var.todo_env_policy
       }
     }
   }

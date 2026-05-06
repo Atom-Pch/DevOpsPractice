@@ -1,7 +1,4 @@
 <script lang="ts">
-	// Access the environment variable. It defaults to localhost if not set.
-	const API_URL = import.meta.env.VITE_API_URL;
-
 	let username = $state('');
 	let password = $state('');
 	let errorMessage = $state('');
@@ -11,7 +8,7 @@
         errorMessage = '';
 
         try {
-            const res = await fetch(`${API_URL}/api/login`, {
+            const res = await fetch(`/api/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

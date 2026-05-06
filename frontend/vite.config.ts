@@ -32,5 +32,15 @@ export default defineConfig({
 				}
 			}
 		]
+	},
+	server: {
+		proxy: {
+			// Replicates your AWS ALB path-based routing locally
+			'/api': {
+				target: 'http://localhost:8080', // Replace with your local backend port
+				changeOrigin: true,
+				// rewrite: (path) => path.replace(/^\/api/, '') // Optional: Use if backend doesn't expect /api prefix
+			}
+		}
 	}
 });

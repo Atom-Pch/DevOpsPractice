@@ -16,7 +16,11 @@ module "todo_bucket" {
     {
       allowed_headers = ["*"],
       allowed_methods = ["GET", "PUT", "DELETE"],
-      allowed_origins = ["http://${var.alb_dns}"],
+      allowed_origins = [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://${var.alb_dns}"
+      ],
       max_age_seconds = 3600
     }
   ]
@@ -42,5 +46,5 @@ module "env_bucket" {
 resource "aws_s3_object" "backend_env" {
   bucket = module.env_bucket.s3_bucket_id
   key    = ".env"
-  source = "../../backend/backend.env"
+  source = "../../backend/.env"
 }

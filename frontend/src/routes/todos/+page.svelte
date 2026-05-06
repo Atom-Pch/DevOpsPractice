@@ -2,9 +2,6 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 
-	// Access the environment variable. It defaults to localhost if not set.
-	const API_URL = import.meta.env.VITE_API_URL;
-
 	let todos = $state<any[]>([]);
 	let newTitle = $state('');
 	let newDescription = $state('');
@@ -20,7 +17,7 @@
 
 	async function fetchTodos() {
 		try {
-			const res = await fetch(`${API_URL}/api/todos`, {
+			const res = await fetch(`/api/todos`, {
 				credentials: 'include'
 			});
 
@@ -56,7 +53,7 @@
 
 				// Get the presigned URL from Go
 				const presignRes = await fetch(
-					`${API_URL}/api/todos/s3-presign?filename=${encodeURIComponent(file.name)}`,
+					'/api/todos/s3-presign?filename=${encodeURIComponent(file.name)}',
 					{
 						credentials: 'include'
 					}
@@ -77,7 +74,7 @@
 			}
 
 			// 2. Save the To-Do item to the Go backend
-			const res = await fetch(`${API_URL}/api/todos`, {
+			const res = await fetch(`/api/todos`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				credentials: 'include',
@@ -106,7 +103,7 @@
 
 	async function deleteTodo(id: number) {
 		try {
-			const res = await fetch(`${API_URL}/api/todos/${id}`, {
+			const res = await fetch(`/api/todos/${id}`, {
 				method: 'DELETE',
 				credentials: 'include' // Must send the cookie!
 			});

@@ -37,9 +37,21 @@ module "alb" {
   }
 
   listeners = {
-    default = {
+    http_redirect = {
       port     = 80
       protocol = "HTTP"
+      redirect = {
+        port        = "443"
+        protocol    = "HTTPS"
+        status_code = "HTTP_301"
+      }
+    }
+
+    https = {
+      port            = 443
+      protocol        = "HTTPS"
+      ssl_policy      = "ELBSecurityPolicy-TLS-1-2-2017-01"
+      certificate_arn = var.acm_arn
       forward = {
         target_group_key = "tg-frontend"
       }
