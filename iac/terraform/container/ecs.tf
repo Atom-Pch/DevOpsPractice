@@ -13,7 +13,7 @@ module "ecs" {
 
       container_definitions = {
         frontend-container = {
-          image     = "131912109503.dkr.ecr.us-east-2.amazonaws.com/todo-frontend-repo:latest"
+          image     = "${module.frontend_repo.repository_url}:latest"
           essential = true
 
           portMappings = [
@@ -58,7 +58,7 @@ module "ecs" {
 
       container_definitions = {
         backend-container = {
-          image     = "131912109503.dkr.ecr.us-east-2.amazonaws.com/todo-backend-repo:latest"
+          image     = "${module.backend_repo.repository_url}:latest"
           essential = true
 
           portMappings = [
@@ -96,7 +96,7 @@ module "ecs" {
           secrets = [
             {
               name = "DB_PASS"
-              valueFrom = "arn:aws:secretsmanager:us-east-2:131912109503:secret:rds!db-f7c461f3-645c-40ac-891a-590b5c39d73a-QUSUCP"
+              valueFrom = "${var.rds_secret_arn}:password::"
             }
           ]
 
