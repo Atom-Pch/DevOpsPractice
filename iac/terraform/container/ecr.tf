@@ -28,7 +28,19 @@ module "frontend_repo" {
     rules = [
       {
         rulePriority = 1,
-        description  = "Keep last 10 images",
+        description  = "Keep no untagged images",
+        selection = {
+          tagStatus   = "untagged",
+          countType   = "imageCountMoreThan",
+          countNumber = 1
+        },
+        action = {
+          type = "expire"
+        }
+      },
+      {
+        rulePriority = 2,
+        description  = "Keep last 10 version images",
         selection = {
           tagStatus     = "tagged",
           tagPrefixList = ["v"],
@@ -64,7 +76,19 @@ module "backend_repo" {
     rules = [
       {
         rulePriority = 1,
-        description  = "Keep last 10 images",
+        description  = "Keep no untagged images",
+        selection = {
+          tagStatus   = "untagged",
+          countType   = "imageCountMoreThan",
+          countNumber = 1
+        },
+        action = {
+          type = "expire"
+        }
+      },
+      {
+        rulePriority = 2,
+        description  = "Keep last 10 version images",
         selection = {
           tagStatus     = "tagged",
           tagPrefixList = ["v"],
