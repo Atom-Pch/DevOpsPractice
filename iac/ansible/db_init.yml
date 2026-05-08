@@ -5,6 +5,7 @@
   gather_facts: false
 
   vars:
+    # CHANGE
     ec2_instance_id: "i-02182da06a4d13a0a"
     db_secret_arn: "arn:aws:secretsmanager:us-east-2:131912109503:secret:rds!db-43bd5731-249f-49fe-93b5-82fefd9f9e2e-GmvEvT"
 
@@ -72,13 +73,15 @@
             msg: "Database was empty. Initialization script applied successfully."
 
       always:
-        - name: Terminate SSM Tunnel and Plugin Processes
-          ansible.builtin.shell: |
-            set -o pipefail
-            pkill -9 -f "session-manager-plugin" || true
-            pkill -9 -f "aws ssm start-session.*{{ ec2_instance_id }}" || true
-            lsof -t -i :{{ db_port }} | xargs -r kill -9 || true
+        - name: Get SSM ID on port 5432
+          ansible.builtin.command: lsof -t -i:5432
+          register: port_pid
           failed_when: false
+          changed_when: false
+
+        - name: Kill the SSM if it exists
+          ansible.builtin.command: "kill -9 {{ port_pid.stdout }}"
+          when: port_pid.stdout != ""
           changed_when: false
 
     - name: Skip Initialization Log
@@ -87,9 +90,13 @@
         msg: "Table '{{ core_table_name }}' found. Database is already initialized. Skipping."
 
     # Failsafe cleanup just in case the block was skipped
-    - name: Failsafe Terminate SSM Tunnel
-      ansible.builtin.shell: |
-        set -o pipefail
-        fuser -k 5432/tcp
+    - name: Get SSM ID on port 5432
+      ansible.builtin.command: lsof -t -i:5432
+      register: port_pid
       failed_when: false
+      changed_when: false
+
+    - name: Kill the SSM if it exists
+      ansible.builtin.command: "kill -9 {{ port_pid.stdout }}"
+      when: port_pid.stdout != ""
       changed_when: false
