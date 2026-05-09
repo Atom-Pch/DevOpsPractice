@@ -12,6 +12,8 @@ services:
       JWT_TOKEN: $JWT_TOKEN
       S3_BUCKET_NAME: $S3_BUCKET_NAME
       AWS_REGION: $AWS_REGION
+    depends_on:
+      - database
 
   frontend:
     build:
@@ -21,7 +23,7 @@ services:
       - "${FRONTEND_PORT}:3000"
     depends_on:
       - backend
-  
+
   proxy:
     image: nginx:1.29.8-alpine
     container_name: nginx
@@ -44,7 +46,7 @@ services:
       - "${DB_PORT}:5432"
     volumes:
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
 
   pgadmin:
     image: dpage/pgadmin4:9.13
