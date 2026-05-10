@@ -8,16 +8,16 @@ workflow:
     - when: never
 
 variables:
-    EC2_INSTANCE_ID: "i-0c3b9b0d96a939724" # CHANGE
-    DB_SECRET_ARN: "arn:aws:secretsmanager:us-east-2:131912109503:secret:rds!db-e70792c1-dde6-4368-a78d-95395d9a2031-qGRQWm" # CHANGE
-    AWS_ROLE_ARN: "arn:aws:iam::131912109503:role/GitLab_ECRImagePush_Role"
-    AWS_ACCOUNT_ID: "131912109503"
-    RDS_ENDPOINT: "todo-db.c962yekmm5ja.us-east-2.rds.amazonaws.com"
-    AWS_REGION: "us-east-2"
-    DB_NAME: "todo_db"
-    DB_PORT: 5432
-    SQL_FILE: "database/init.sql"
-    CORE_TABLE_NAME: "users"
+  EC2_INSTANCE_ID: "i-0c3b9b0d96a939724" # CHANGE
+  DB_SECRET_ARN: "arn:aws:secretsmanager:us-east-2:131912109503:secret:rds!db-e70792c1-dde6-4368-a78d-95395d9a2031-qGRQWm" # CHANGE
+  AWS_ROLE_ARN: "arn:aws:iam::131912109503:role/GitLab_ECRImagePush_Role"
+  AWS_ACCOUNT_ID: "131912109503"
+  RDS_ENDPOINT: "todo-db.c962yekmm5ja.us-east-2.rds.amazonaws.com"
+  AWS_REGION: "us-east-2"
+  DB_NAME: "todo_db"
+  DB_PORT: 5432
+  SQL_FILE: "database/init.sql"
+  CORE_TABLE_NAME: "users"
 
 .aws_oidc_auth: &aws_oidc_auth
   id_tokens:
@@ -44,10 +44,11 @@ build_and_push_images:
 initialize_database:
   stage: db_init
   image: ubuntu:22.04
-  <<: *aws_oidc_auth # Uses the OIDC authentication anchor from our previous setup
+  <<: *aws_oidc_auth 
   before_script:
+    - !reference [.aws_oidc_auth, before_script] # Cleanly imports the OIDC token setup
     - export DEBIAN_FRONTEND=noninteractive
-    - apt-get update && apt-get install -y curl unzip jq postgresql-client netcat-openbsd
+    - apt-get update && apt-get install -y curl unzip jq postgresql-client netcat-openbsd lsof
 
     # 1. Install AWS CLI v2
     - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -56,10 +57,6 @@ initialize_database:
     # 2. Install AWS SSM Session Manager Plugin
     - curl -sL "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
     - dpkg -i session-manager-plugin.deb
-
-    # 3. Setup OIDC Token
-    - echo "${GITLAB_OIDC_TOKEN}" > /tmp/web_identity_token
-    - export AWS_WEB_IDENTITY_TOKEN_FILE=/tmp/web_identity_token
 
   script:
     - echo "Fetching DB Credentials via Lookup..."
@@ -75,6 +72,7 @@ initialize_database:
         --parameters host="$RDS_ENDPOINT",portNumber="$DB_PORT",localPortNumber="$DB_PORT" \
         --region "$AWS_REGION" > /dev/null 2>&1 &
     - TUNNEL_PID=$!
+    
     - echo "Waiting for tunnel to stabilize..."
     # Loops until it can successfully reach port 5432 on localhost, or gives up after ~30 seconds
     - for i in {1..15}; do nc -z 127.0.0.1 $DB_PORT && break || sleep 2; done
