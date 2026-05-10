@@ -1,5 +1,5 @@
 stages:
-  - build
+  - ecr_push
   - db_init
 
 workflow:
@@ -30,7 +30,7 @@ variables:
     - export AWS_WEB_IDENTITY_TOKEN_FILE=/tmp/web_identity_token
 
 build_and_push_images_latest:
-  stage: build
+  stage: ecr_push
   image: docker:24.0.5
   services:
     - docker:24.0.5-dind
