@@ -5,6 +5,6 @@ scrape_configs:
   - job_name: 'backend'
     dns_sd_configs:
       - names:
-          - 'backend-discovery.todo.local.todo.local'
+          - 'backend-discovery.todo.local'
         type: 'A'
         port: 8080
