@@ -40,7 +40,7 @@ module "alb" {
       port     = 6060
       health_check = {
         enabled = true
-        path    = "/"
+        path    = "/api/health"
       }
       target_type       = "ip"
       create_attachment = false
