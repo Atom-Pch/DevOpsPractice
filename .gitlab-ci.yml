@@ -20,6 +20,8 @@ variables:
   CORE_TABLE_NAME: "users"
   FRONTEND_REPO: "todo-frontend-repo"
   BACKEND_REPO: "todo-backend-repo"
+  PROMETHEUS_REPO: "todo-prom-repo"
+  GRAFANA_REPO: "todo-graf-repo"
 
 .aws_oidc_auth: &aws_oidc_auth
   id_tokens:
@@ -62,13 +64,21 @@ build_and_push_images_latest:
     - apk add --no-cache aws-cli
     - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 
-    - docker build --provenance=false -t $FRONTEND_REPO ./frontend
+    - docker build --provenance=false -t $FRONTEND_REPO ./frontend/
     - docker tag $FRONTEND_REPO:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPO:latest
     - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$FRONTEND_REPO:latest
 
-    - docker build --provenance=false -t $BACKEND_REPO ./backend
+    - docker build --provenance=false -t $BACKEND_REPO ./backend/
     - docker tag $BACKEND_REPO:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPO:latest
     - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$BACKEND_REPO:latest
+
+    - docker build --provenance=false -t $PROMETHEUS_REPO ./mno/prometheus/
+    - docker tag $PROMETHEUS_REPO:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$PROMETHEUS_REPO:latest
+    - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$PROMETHEUS_REPO:latest
+
+    - docker build --provenance=false -t $GRAFANA_REPO ./mno/grafana/
+    - docker tag $GRAFANA_REPO:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$GRAFANA_REPO:latest
+    - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$GRAFANA_REPO:latest
 
 # ---------------------------------------------------------
 # STAGE: DB INIT ON NEW RDS
