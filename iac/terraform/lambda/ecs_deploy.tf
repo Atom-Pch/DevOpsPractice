@@ -29,16 +29,16 @@ resource "aws_iam_role_policy" "lambda_ecs_deploy_policy" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-      # {
-      #   # Allow Lambda to write logs to CloudWatch
-      #   Effect = "Allow"
-      #   Action = [
-      #     "logs:CreateLogGroup",
-      #     "logs:CreateLogStream",
-      #     "logs:PutLogEvents"
-      #   ]
-      #   Resource = "arn:aws:logs:*:*:*"
-      # },
+      {
+        # Allow Lambda to write logs to CloudWatch
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "arn:aws:logs:*:*:*"
+      },
       {
         # Allow Lambda to force-update ECS services
         Effect = "Allow"
