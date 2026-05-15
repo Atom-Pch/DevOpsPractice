@@ -7,11 +7,11 @@ ecs = boto3.client("ecs")
 # Refactored: Map ECR repository names to BOTH their target Cluster and Service
 REPO_MAP = {
     os.environ["FRONTEND_REPO_NAME"]: {
-        "cluster": os.environ["APP_CLUSTER_NAME"],
+        "cluster": os.environ["ECS_CLUSTER_NAME"],
         "service": os.environ["FRONTEND_SERVICE_NAME"],
     },
     os.environ["BACKEND_REPO_NAME"]: {
-        "cluster": os.environ["APP_CLUSTER_NAME"],
+        "cluster": os.environ["ECS_CLUSTER_NAME"],
         "service": os.environ["BACKEND_SERVICE_NAME"],
     },
     os.environ["PROM_REPO_NAME"]: {
