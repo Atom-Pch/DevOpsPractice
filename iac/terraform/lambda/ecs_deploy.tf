@@ -57,6 +57,13 @@ resource "aws_iam_role_policy" "lambda_ecs_deploy_policy" {
   })
 }
 
+# Set expireation for logs
+resource "aws_cloudwatch_log_group" "ecs_deploy_lambda_logs" {
+  # The name MUST match the exact path Lambda expects
+  name              = "/aws/lambda/${aws_lambda_function.ecs_deploy_lambda.function_name}"
+  retention_in_days = 1
+}
+
 # 3. The Lambda Function
 resource "aws_lambda_function" "ecs_deploy_lambda" {
   filename         = data.archive_file.lambda_zip.output_path
