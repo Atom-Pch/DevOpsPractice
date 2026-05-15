@@ -81,3 +81,24 @@ module "ec2-instance" {
     AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
   }
 }
+
+# Writes the new EC2 ID to a static SSM Parameter path
+resource "aws_ssm_parameter" "bastion_ec2_id" {
+  name  = "/myapp/config/bastion_ec2_id"
+  type  = "String"
+  value = module.ec2-instance.id
+}
+
+# Writes the new Secret ARN to a static SSM Parameter path
+resource "aws_ssm_parameter" "db_secret_arn" {
+  name  = "/myapp/config/db_secret_arn"
+  type  = "String"
+  value = module.rds.db_instance_master_user_secret_arn
+}
+
+# Also do this for your RDS Endpoint!
+resource "aws_ssm_parameter" "rds_endpoint" {
+  name  = "/myapp/config/rds_endpoint"
+  type  = "String"
+  value = module.rds.db_instance_address
+}
