@@ -51,7 +51,7 @@ def lambda_handler(event, context):
             service=service_name, 
             forceNewDeployment=True
         )
-        print("Deployment triggered successfully!")
+        print("Deployment triggered successfully!", "Cluster:", cluster_name, "| Service:", service_name)
         return {"status": "success", "cluster": cluster_name, "service": service_name}
     except Exception as e:
         print(f"Error updating service: {str(e)}")
