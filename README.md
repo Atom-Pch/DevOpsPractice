@@ -6,7 +6,10 @@ While the application itself is a straightforward To-Do tracker with authenticat
 
 ---
 
-## ⚠️ Project Status & Important Notes
+## 🌍 **Live Demo:** [https://onlytodo.xyz](https://onlytodo.xyz)
+**⏳ Demo notice:** To conserve AWS credits, the live environment is ephemeral. The infrastructure is automated to be available on a strict schedule and is *only accessible between 09:30 and 17:30 each day Bangkok time (UTC+7)*. Outside of these hours, **the entire infrastructure will be detroyed** before being created again the next day. If you want to check it out, please do so in the specified time.
+
+## ⚠️ Project Status & Other important Notes
 
 * **Work in Progress:** This is an active, ongoing project. You will likely see active refactoring, code cleaning, and bug fixing happening as I continue to build and learn.
 * **Budget Constraints:** This architecture is built utilizing the AWS Free Tier and promotional credits. Because of these strict cost limitations, certain critical production elements such as highly available multi-AZ deployments, advanced security layers, and comprehensive logging may be compromised or scaled back, despite known best practices.
