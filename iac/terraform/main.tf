@@ -11,7 +11,6 @@ terraform {
 
 provider "aws" {
   region  = var.aws_region
-  profile = var.aws_profile
 
   default_tags {
     tags = {
@@ -35,7 +34,6 @@ module "database" {
 
   backend_sg      = module.container.backend_sg
   vpc             = module.networks.vpc
-  my_ip           = var.my_ip
   private_subnets = module.networks.private_subnets
 }
 

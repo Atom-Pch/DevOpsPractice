@@ -7,7 +7,6 @@ module "rds_sg" {
   vpc_id      = var.vpc
 
   ingress_rules       = ["postgresql-tcp"]
-  ingress_cidr_blocks = [var.my_ip]
   ingress_with_source_security_group_id = [
     {
       rule = "postgresql-tcp"

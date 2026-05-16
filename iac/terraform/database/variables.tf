@@ -7,4 +7,3 @@ variable "vpc" {
 variable "private_subnets" {
   description = "private subnets for RDS"
 }
-variable "my_ip" {}
