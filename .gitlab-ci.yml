@@ -63,7 +63,6 @@ initialize_infrastructure:
     name: hashicorp/terraform:1.14
     entrypoint: [""]
   rules:
-    - if: $CI_PIPELINE_SOURCE == "web" # TEST
     - if: $CI_PIPELINE_SOURCE == "schedule" && $DAILY_ACTION == "up"
   <<: *aws_oidc_auth
   before_script:
@@ -209,8 +208,7 @@ destroy_infrastructure:
     name: hashicorp/terraform:1.14
     entrypoint: [""]
   rules:
-    - if: $CI_PIPELINE_SOURCE == "web" # TEST
-    # - if: $CI_PIPELINE_SOURCE == "schedule" && $DAILY_ACTION == "down"
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $DAILY_ACTION == "down"
   <<: *aws_oidc_auth
   before_script:
     - !reference [.aws_oidc_auth, before_script] # Cleanly imports the OIDC token setup
