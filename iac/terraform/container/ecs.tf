@@ -116,6 +116,10 @@ module "ecs" {
         files_policy = var.todo_files_policy
       }
 
+      task_exec_iam_role_policies = {
+        backend_secret_policy = aws_iam_policy.get_backend_secrets.arn
+      }
+
       service_registries = {
         registry_arn   = aws_service_discovery_service.backend.arn
         container_name = "backend-container"
@@ -230,6 +234,27 @@ module "ecs_monitoring" {
 }
 
 # For secrets retrieval
+resource "aws_iam_policy" "get_backend_secrets" {
+  name        = "BackendSecretAccess"
+  description = "Allow backend service to access secrets"
+
+  policy = jsonencode({
+    Version : "2012-10-17",
+    Statement : [
+      {
+        Action : [
+          "secretsmanager:GetSecretValue"
+        ],
+        Effect : "Allow",
+        Resource : [
+          "${var.rds_secret_arn}",
+          "${var.todo_app_secret_arn}"
+        ]
+      }
+    ]
+  })
+}
+
 resource "aws_iam_policy" "mno_secret" {
   name        = "MnOSecretAccess"
   description = "Allow Monitoring and Observalibity service to access secrets"
