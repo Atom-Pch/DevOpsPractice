@@ -9,22 +9,21 @@ terraform {
   }
 
   backend "s3" {
-    bucket = "todo-terraform-131912109503-us-east-2-an"
-    key = "todo/terraform.tfstate"
-    region = "us-east-2"
-    encrypt = true
+    bucket       = "todo-terraform-131912109503-us-east-2-an"
+    key          = "todo/terraform.tfstate"
+    region       = "us-east-2"
+    encrypt      = true
     use_lockfile = true
   }
 }
 
 provider "aws" {
-  region  = var.aws_region
+  region = var.aws_region
 
   default_tags {
     tags = {
-      Environment = "Practice"
-      ManagedBy   = "Terraform"
-      Project     = "TodoApp"
+      Creator = "Terraform"
+      Project = "TodoApp"
     }
   }
 }
@@ -56,15 +55,15 @@ module "load_balancer" {
 module "container" {
   source = "./container"
 
-  tag_policy        = "IMMUTABLE_WITH_EXCLUSION"
-  alb_sg            = module.load_balancer.alb_sg
-  vpc               = module.networks.vpc
-  private_subnets   = module.networks.private_subnets
-  alb_tg            = module.load_balancer.alb_tg
-  todo_files_policy = module.iam.todo_files_policy
-  s3_files_name     = module.storage.s3_files_name
-  db_address        = module.database.db_address
-  rds_secret_arn    = module.database.rds_secret_arn
+  tag_policy          = "IMMUTABLE_WITH_EXCLUSION"
+  alb_sg              = module.load_balancer.alb_sg
+  vpc                 = module.networks.vpc
+  private_subnets     = module.networks.private_subnets
+  alb_tg              = module.load_balancer.alb_tg
+  todo_files_policy   = module.iam.todo_files_policy
+  s3_files_name       = module.storage.s3_files_name
+  db_address          = module.database.db_address
+  rds_secret_arn      = module.database.rds_secret_arn
   todo_app_secret_arn = var.todo-app-secret-arn
 }
 
