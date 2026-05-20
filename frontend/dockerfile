@@ -14,5 +14,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY package.json .
 EXPOSE 3000
 ENV PORT=3000 \
-    NODE_ENV=production 
+    NODE_ENV=production
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
 CMD ["node", "build"]
